@@ -1,8 +1,9 @@
-stages: deploy
+stages: 
+  - deploy
 
 create-pages:
   before_script:
-    - cd <my_directory_here>
+    - cd CSCI567-F25-Omar-Rodriguez-Bernal
     - flutter pub get
   script:
     - flutter build web
