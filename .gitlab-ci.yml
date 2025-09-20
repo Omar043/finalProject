@@ -1,0 +1,32 @@
+stages: deploy
+
+create-pages:
+  before_script:
+    - cd <my_directory_here>
+    - flutter pub get
+  script:
+    - flutter build web
+    - cp -r build/web ../public
+
+  image: instrumentisto/flutter:latest
+  stage: deploy
+  script:
+    - mv my-html-content public
+  pages: true  # specifies this is a Pages job, publish to default public/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "assignment2"
+  environment: production
+
+
+  
+
+
+# version from pre-Fall2025 (do not need artifacts listed anymore)
+pages:
+  stage: deploy
+  script:
+    - mv my-html-content public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "assignment2"
+  environment: production
+
