@@ -5,17 +5,17 @@ pages:
   image: instrumentisto/flutter:latest
   stage: deploy
 
-  before_script:
+  script:
     - cd my_assignment
     - flutter pub get
-
-  script:
     - flutter build web
+    - cd ..
     - mkdir public
-    - cp -r build/web/* public/
+    - cp -r my_assignment/build/web/* public/
   artifacts:
     paths:
       - public
   rules:
     - if: $CI_COMMIT_BRANCH == "assignment2"
   environment: production
+
