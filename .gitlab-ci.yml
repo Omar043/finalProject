@@ -1,33 +1,17 @@
-stages: 
+stages:
   - deploy
 
-create-pages:
-  before_script:
-    - cd CSCI567-F25-Omar-Rodriguez-Bernal
-    - flutter pub get
-  script:
-    - flutter build web
-    - cp -r build/web ../public
-
+pages:
   image: instrumentisto/flutter:latest
   stage: deploy
+
+  before_script:
+    - flutter pub get
+
   script:
-    - mv my-html-content public
-  pages: true  # specifies this is a Pages job, publish to default public/
+    - flutter build web
+    - mkdir public
+    - cp -r build/web/* public/
   rules:
     - if: $CI_COMMIT_BRANCH == "assignment2"
   environment: production
-
-
-  
-
-
-# version from pre-Fall2025 (do not need artifacts listed anymore)
-pages:
-  stage: deploy
-  script:
-    - mv my-html-content public
-  rules:
-    - if: $CI_COMMIT_BRANCH == "assignment2"
-  environment: production
-
