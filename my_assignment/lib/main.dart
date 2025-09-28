@@ -1,7 +1,6 @@
 /*
     main.dart
 */
-import 'interactive.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(MainPage());
@@ -52,33 +51,29 @@ class _MainPageState extends State<MainPage> {
       /*
           Button that changes the color of the App
       */
-      CustomButton(
-        button: ElevatedButton(
-          style: ButtonStyle(
-            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-            // Background color (normal & pressed)
-            backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-              Set<WidgetState> states,
-            ) {
-              if (states.contains(WidgetState.pressed)) {
-                return Colors.blueAccent.withValues(
-                  alpha: 0.5,
-                ); // pressed color
-              }
-              return Colors.blueAccent; // default background
-            }),
-          ),
+      ElevatedButton(
+        style: ButtonStyle(
+          foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
+          // Background color (normal & pressed)
+          backgroundColor: WidgetStateProperty.resolveWith<Color?>((
+            Set<WidgetState> states,
+          ) {
+            if (states.contains(WidgetState.pressed)) {
+              return Colors.blueAccent.withValues(alpha: 0.5); // pressed color
+            }
+            return Colors.blueAccent; // default background
+          }),
+        ),
 
-          onPressed: () {
-            _changeAppBarColor();
-          },
-          child: Text(
-            'button that changes appbar color',
-            style: TextStyle(
-              fontSize: 40.0,
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-            ),
+        onPressed: () {
+          _changeAppBarColor();
+        },
+        child: Text(
+          'button that changes appbar color',
+          style: TextStyle(
+            fontSize: 40.0,
+            color: Colors.green,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -86,82 +81,73 @@ class _MainPageState extends State<MainPage> {
       /*
           Button that prints response in console log
       */
-      CustomButton(
-        button: TextButton(
-          style: ButtonStyle(
-            foregroundColor: WidgetStateProperty.all<Color>(
-              const Color.fromARGB(49, 255, 255, 255),
-            ),
-            // Background color (normal & pressed)
-            backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-              Set<WidgetState> states,
-            ) {
-              if (states.contains(WidgetState.pressed)) {
-                return const Color.fromARGB(
-                  255,
-                  68,
-                  255,
-                  243,
-                ).withValues(alpha: 0.5); // pressed color
-              }
+      TextButton(
+        style: ButtonStyle(
+          foregroundColor: WidgetStateProperty.all<Color>(
+            const Color.fromARGB(49, 255, 255, 255),
+          ),
+          // Background color (normal & pressed)
+          backgroundColor: WidgetStateProperty.resolveWith<Color?>((
+            Set<WidgetState> states,
+          ) {
+            if (states.contains(WidgetState.pressed)) {
               return const Color.fromARGB(
                 255,
                 68,
                 255,
-                239,
-              ); // default background
-            }),
-          ),
-          onPressed: () {
-            print("21");
-          },
-          child: Text(
-            'what is 9 + 10?(button prints answer)',
-            style: TextStyle(
-              fontSize: 40.0,
-              color: const Color.fromARGB(255, 230, 46, 187),
-              fontWeight: FontWeight.bold,
-            ),
+                243,
+              ).withValues(alpha: 0.5); // pressed color
+            }
+            return const Color.fromARGB(
+              255,
+              68,
+              255,
+              239,
+            ); // default background
+          }),
+        ),
+        onPressed: () {
+          print("21");
+        },
+        child: Text(
+          'what is 9 + 10?(button prints answer)',
+          style: TextStyle(
+            fontSize: 40.0,
+            color: const Color.fromARGB(255, 230, 46, 187),
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
 
-      CustomButton(
-        button: OutlinedButton(
-          style: ButtonStyle(
-            foregroundColor: WidgetStateProperty.all<Color>(
-              const Color.fromARGB(210, 49, 175, 32),
-            ),
-            // Background color (normal & pressed)
-            backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-              Set<WidgetState> states,
-            ) {
-              if (states.contains(WidgetState.pressed)) {
-                return const Color.fromARGB(
-                  255,
-                  81,
-                  68,
-                  255,
-                ).withValues(alpha: 0.5); // pressed color
-              }
+      OutlinedButton(
+        style: ButtonStyle(
+          foregroundColor: WidgetStateProperty.all<Color>(
+            const Color.fromARGB(210, 49, 175, 32),
+          ),
+          // Background color (normal & pressed)
+          backgroundColor: WidgetStateProperty.resolveWith<Color?>((
+            Set<WidgetState> states,
+          ) {
+            if (states.contains(WidgetState.pressed)) {
               return const Color.fromARGB(
                 255,
                 81,
                 68,
                 255,
-              ); // default background
-            }),
-          ),
-          onPressed: () {
-            _addItem();
-          },
-          child: Text(
-            "tap to append text to list",
-            style: TextStyle(
-              fontSize: 40.0,
-              color: const Color.fromARGB(255, 160, 121, 38),
-              fontWeight: FontWeight.bold,
-            ),
+              ).withValues(alpha: 0.5); // pressed color
+            }
+            return const Color.fromARGB(255, 81, 68, 255); // default background
+          }),
+        ),
+        onPressed: () {
+          _addItem();
+        },
+        child: Text(
+          "tap to append text to list",
+          style: TextStyle(
+            fontSize: 40.0,
+            color: const Color.fromARGB(255, 160, 121, 38),
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
