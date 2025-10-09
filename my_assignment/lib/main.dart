@@ -2,6 +2,8 @@
     main.dart
 */
 import 'package:flutter/material.dart';
+import 'package:flutter_spinbox/flutter_spinbox.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(MainPage());
 
@@ -12,161 +14,136 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  ///
-  /// AppBar color variables and functions
-  ///
-  Color _appBarColor = Colors.redAccent; //appBar variable
+  //Appbar Color
+  final Color _appBarColor = Colors.redAccent;
 
-  void _changeAppBarColor() {
-    //funcion that changes appBar color
+  //Controllers for retrieving input
+  final TextEditingController _textController = TextEditingController();
+  double tempFavNumber = 0;
+  int tempId = 1;
+
+  //Variables for input storage:
+  String name = "";
+  double favNumber = 0;
+  int id = 0;
+
+  //Functions assosiated with the shared_preferences function:
+  late SharedPreferences prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initPrefs(); // Call the async function here
+  }
+
+  Future<void> _initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    _loadPrefs(); // Now that prefs is ready
+  }
+
+  Future<void> _loadPrefs() async {
     setState(() {
-      if (_appBarColor == Colors.redAccent) {
-        _appBarColor = Colors.blueAccent;
-      } else {
-        _appBarColor = Colors.redAccent;
-      }
+      name = prefs.getString('name') ?? '';
+      favNumber = prefs.getDouble('favNumber') ?? 0.0;
+      id = prefs.getInt('id') ?? 1;
     });
   }
 
-  ///
-  /// List appendage variables and functions
-  ///
+  //Functions for input handling
+  Future<void> saveInputValues() async {
+    final testName = _textController.text;
+    final testFavNumber = tempFavNumber;
+    final testId = tempId;
 
-  final TextEditingController _textBoxController = TextEditingController();
-  final List<String> _items = [];
-  void _addItem() {
-    final text = _textBoxController.text.trim();
-    if (text.isNotEmpty) {
+    final savedName = prefs.getString('name') ?? '';
+    final savedFavNumber = prefs.getDouble('favNumber') ?? 0.0;
+    final savedId = prefs.getInt('id') ?? 1;
+
+    bool hasChanged = false;
+
+    // Only update name if not empty and changed
+    if (testName.isNotEmpty && testName != savedName) {
+      await prefs.setString('name', testName);
+      hasChanged = true;
+    }
+
+    // Always update favNumber and id (since they’re SpinBoxes and always have values)
+    if (testFavNumber != savedFavNumber) {
+      await prefs.setDouble('favNumber', testFavNumber);
+      hasChanged = true;
+    }
+
+    if (testId != savedId) {
+      await prefs.setInt('id', testId);
+      hasChanged = true;
+    }
+
+    if (hasChanged) {
       setState(() {
-        _items.add(text);
+        if (testName.isNotEmpty) {
+          name = testName;
+        }
+        favNumber = testFavNumber;
+        id = testId;
       });
-      _textBoxController.clear(); // clear text field after adding
     }
   }
 
-  @override //ovveride is used because we need  recontextualize build class
+  @override
   Widget build(BuildContext context) {
-    //widget list:
     List<Widget> widgetList = [
       /*
-          Button that changes the color of the App
-      */
-      ElevatedButton(
-        style: ButtonStyle(
-          foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          // Background color (normal & pressed)
-          backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-            Set<WidgetState> states,
-          ) {
-            if (states.contains(WidgetState.pressed)) {
-              return Colors.blueAccent.withValues(alpha: 0.5); // pressed color
-            }
-            return Colors.blueAccent; // default background
-          }),
-        ),
-
-        onPressed: () {
-          _changeAppBarColor();
-        },
-        child: Text(
-          'button that changes appbar color',
-          style: TextStyle(
-            fontSize: 40.0,
-            color: Colors.green,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+        method of displaying name, favorite number, and id
+    */
+      //name: text
+      Text('Current name: $name'),
+      Text('Current favorite number: $favNumber'),
+      Text('Current id: $id'),
 
       /*
-          Button that prints response in console log
-      */
-      TextButton(
-        style: ButtonStyle(
-          foregroundColor: WidgetStateProperty.all<Color>(
-            const Color.fromARGB(49, 255, 255, 255),
-          ),
-          // Background color (normal & pressed)
-          backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-            Set<WidgetState> states,
-          ) {
-            if (states.contains(WidgetState.pressed)) {
-              return const Color.fromARGB(
-                255,
-                68,
-                255,
-                243,
-              ).withValues(alpha: 0.5); // pressed color
-            }
-            return const Color.fromARGB(
-              255,
-              68,
-              255,
-              239,
-            ); // default background
-          }),
-        ),
-        onPressed: () {
-          print("21");
-        },
-        child: Text(
-          'what is 9 + 10?(button prints answer)',
-          style: TextStyle(
-            fontSize: 40.0,
-            color: const Color.fromARGB(255, 230, 46, 187),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-
-      OutlinedButton(
-        style: ButtonStyle(
-          foregroundColor: WidgetStateProperty.all<Color>(
-            const Color.fromARGB(210, 49, 175, 32),
-          ),
-          // Background color (normal & pressed)
-          backgroundColor: WidgetStateProperty.resolveWith<Color?>((
-            Set<WidgetState> states,
-          ) {
-            if (states.contains(WidgetState.pressed)) {
-              return const Color.fromARGB(
-                255,
-                81,
-                68,
-                255,
-              ).withValues(alpha: 0.5); // pressed color
-            }
-            return const Color.fromARGB(255, 81, 68, 255); // default background
-          }),
-        ),
-        onPressed: () {
-          _addItem();
-        },
-        child: Text(
-          "tap to append text to list",
-          style: TextStyle(
-            fontSize: 40.0,
-            color: const Color.fromARGB(255, 160, 121, 38),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-
+      form with four elements:
+        textfield for name,
+        scroll for favorite number,
+        number text field? for id
+        submit button
+    */
       TextField(
-        controller: _textBoxController,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: "Enter text",
-        ),
+        controller: _textController,
+        decoration: InputDecoration(labelText: "Name input"),
       ),
 
-      Expanded(
-        child: ListView.builder(
-          itemCount: _items.length,
-          itemBuilder: (context, index) {
-            return ListTile(title: Text(_items[index]));
-          },
-        ),
+      SpinBox(
+        min: -100.0,
+        max: 100.0,
+        value: tempFavNumber,
+        step: 0.1,
+        decimals: 2,
+        decoration: const InputDecoration(labelText: 'Favorite Number'),
+        onChanged: (val) {
+          setState(() => tempFavNumber = val);
+        },
+      ),
+
+      SpinBox(
+        min: 1,
+        max: 5000,
+        value: tempId.toDouble(),
+        step: 1,
+        decimals: 0,
+        decoration: const InputDecoration(labelText: 'Id'),
+        onChanged: (val) {
+          setState(() => tempId = val.toInt());
+        },
+      ),
+
+      //button that when pressed, saves all of the information to a persistent state
+      ElevatedButton(
+        onPressed: () async {
+          // Action when the button is pressed
+          await saveInputValues();
+          await _loadPrefs();
+        },
+        child: Text('Press to store current values'),
       ),
     ];
 
@@ -177,12 +154,8 @@ class _MainPageState extends State<MainPage> {
           title: const Text('CSCI567 Hello World'),
         ),
         body: Padding(
-          //to construct the body, the padding element is used to store the elements of the widget
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            //widgets are iterated through as children of the padding element
-            children: widgetList,
-          ),
+          child: Column(children: widgetList),
         ),
       ),
     );
