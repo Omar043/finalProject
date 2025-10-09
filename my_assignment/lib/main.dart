@@ -38,7 +38,7 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _initPrefs() async {
     prefs = await SharedPreferences.getInstance();
-    _loadPrefs(); // Now that prefs is ready
+    _loadPrefs();
   }
 
   Future<void> _loadPrefs() async {
@@ -61,13 +61,12 @@ class _MainPageState extends State<MainPage> {
 
     bool hasChanged = false;
 
-    // Only update name if not empty and changed
+    //name is only updated when it has a value and is a different value
     if (testName.isNotEmpty && testName != savedName) {
       await prefs.setString('name', testName);
       hasChanged = true;
     }
 
-    // Always update favNumber and id (since they’re SpinBoxes and always have values)
     if (testFavNumber != savedFavNumber) {
       await prefs.setDouble('favNumber', testFavNumber);
       hasChanged = true;
