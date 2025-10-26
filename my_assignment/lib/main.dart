@@ -1,12 +1,14 @@
-/*
-    main.dart
-*/
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // for decoding json formatted text
-import 'package:http/http.dart' as http; // for making the http request
+import 'package:flutter_spinbox/flutter_spinbox.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'data/firebasestorage.dart';
 
-void main() => runApp(MainPage());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const MaterialApp(home: MainPage()));
+}
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -14,180 +16,119 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-//the following class is for storing information returned in the api request to oepnfoodfacts
-class FoodCard {
-  String? name;
-  String? ingredients;
-  Map<String, dynamic>? nutriments;
-  List<dynamic>? allergenTags;
-  List<dynamic>? traces;
-
-  FoodCard({
-    required this.name,
-    required this.ingredients,
-    required this.nutriments,
-    required this.allergenTags,
-  });
-}
-
 class _MainPageState extends State<MainPage> {
-  //Appbar Color
   final Color _appBarColor = Colors.redAccent;
+  final TextEditingController _textController = TextEditingController();
 
-  //Functions assosiated with the shared_preferences function:
-  late SharedPreferences prefs;
+  /*
+      Variables:
+        id = keeps track of the updated id
+        tempId = keeps track of the raw user input id
+        userName = keeps track of the username
+        CFStorage = interface to the firebase databae
+  */
+  int id = 0;
+  int tempId = 0;
+  String userName = "";
+  final CFStorage _storage = CFStorage();
+
+  /*
+      addInputToDatabase():
+        The following function verifies that the input the user entered is updated,
+        and subsequently adds the input to the user database.
+        
+        The program subsequently notifies the user if their input has been accepted
+        through a pop up message in the botton of the screen, with green indicating
+        success and red failiure
+  */
+  void addInputToDatabase() {
+    String testUsername = _textController.text.trim();
+
+    if (testUsername.isNotEmpty && tempId != 0) {
+      //check for non-modified fields
+      _storage.writeValues(testUsername, tempId).then((_) async {
+        //data is written to the database, and then retrieved and interpreted
+        var data = await _storage.readValues();
+        setState(() {
+          //values are updated to the display
+          userName = data.userName;
+          id = data.id;
+        });
+
+        //success popup message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data saved successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        _textController.clear();
+      });
+    } else {
+      //failiure popup message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Field(s) Empty. Enter info in both fields'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<Map<String, dynamic>?> retrieveFoodInformation(String barcode) async {
-    /*
-      URL Construction:
-        The base url for OpenFoodFacts is the inital url.
-        The barcode and query parameters are attached to the final url.
-  */
-
-    final Uri uri =
-        Uri.parse(
-          'https://world.openfoodfacts.org/api/v2/product/$barcode.json',
-        ).replace(
-          queryParameters: {
-            'fields':
-                'product_name,code,ingredients_text,nutriments, allergens,allergens_tags,traces_tags',
-          },
-        );
-
-    /*
-      HTTP Response Handling:
-        Null will be returned in the case that the foodscan server does not respond or information pertaining to the food item is not found.
-  */
-    final response = await http.get(
-      uri,
-      headers: {'User-Agent': 'FoodScan/1.0 (20omarr04@gmail.com)'},
-    );
-
-    if (response.statusCode != 200) {
-      return null;
-    }
-    final Map<String, dynamic> json = jsonDecode(response.body);
-
-    if (json['status'] != 1) {
-      return null;
-    }
-    final product = json['product'] as Map<String, dynamic>;
-    final ingredients = product['ingredients_text'];
-    final nutriments = product['nutriments'] as Map<String, dynamic>?;
-    final allergenTags = product['allergens_tags'] as List<dynamic>?;
-    final traces = product['traces_tags'] as List<dynamic>?;
-    final foodName = product['product_name'] as String? ?? 'Unknown Food';
-
-    return {
-      'food_name': foodName,
-      'ingredients': ingredients,
-      'nutriments': nutriments,
-      'allergen_tags': allergenTags,
-      'traces': traces,
-    };
-  }
-
-  List<Map<String, dynamic>?> foodReturnValues = [];
-
-  Future<void> addItemsToList() async {
-    List<String> foodItemUpcCodes = [
-      "028400047913", //hot cheetoes
-      "074323092301", //bimbo whole wheat
-      "888109253097", //jumbo honey bun
-    ];
-
-    foodReturnValues.clear();
-    for (var item in foodItemUpcCodes) {
-      var itemToAdd = await retrieveFoodInformation(item); // wait for result
-      if (itemToAdd != null) {
-        // only items that have return value returned.
-        foodReturnValues.add(itemToAdd);
-      }
-    }
-    setState(() {});
+    _storage.readValues().then((data) {
+      setState(() {
+        id = data.id;
+        userName = data.userName;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> widgetList = [
-      ElevatedButton(
-        onPressed: () async {
-          await addItemsToList();
-        },
-        child: Text('Press to load items'),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: _appBarColor,
+        title: const Text('CSCI567 Hello World'),
       ),
-      Expanded(child: DisplayItems(itemsToShow: foodReturnValues)),
-    ];
-
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: _appBarColor,
-          title: const Text('CSCI567 Hello World'),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(children: widgetList),
-        ),
-      ),
-    );
-  }
-}
-
-class DisplayItems extends StatelessWidget {
-  final List<Map<String, dynamic>?> itemsToShow;
-
-  const DisplayItems({required this.itemsToShow});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: itemsToShow.length,
-      itemBuilder: (context, index) {
-        final item = itemsToShow[index];
-
-        //null check
-        if (item == null) {
-          return ListTile(title: Text("No data available"));
-        }
-
-        return Card(
-          margin: EdgeInsets.all(8.0),
-          child: ListTile(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              //elements from api request are retrieved
-              children: [
-                Text(
-                  item['food_name'] ?? 'Unknown Food',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  "Ingredients: ${item['ingredients'] ?? 'Not available'}",
-                  style: TextStyle(fontSize: 16),
-                ),
-                SizedBox(height: 8.0),
-
-                if (item['allergen_tags'] != null &&
-                    item['allergen_tags']!.isNotEmpty)
-                  Text(
-                    "Allergens: ${item['allergen_tags']?.join(', ') ?? 'None'}",
-                    style: TextStyle(fontSize: 16),
-                  )
-                else
-                  Text("Allergens: None", style: TextStyle(fontSize: 16)),
-                SizedBox(height: 8.0),
-              ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text(
+              'Display Widgets:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 8),
+            Text('UserName: $userName', style: const TextStyle(fontSize: 16)),
+            Text('Id: $id', style: const TextStyle(fontSize: 16)),
+            ElevatedButton(
+              onPressed: () => addInputToDatabase(),
+              child: const Text('Add data to database'),
+            ),
+            TextField(
+              controller: _textController,
+              decoration: const InputDecoration(labelText: "Username input"),
+            ),
+            SpinBox(
+              min: 1,
+              max: 5000,
+              value: id.toDouble(),
+              step: 1,
+              decimals: 0,
+              decoration: const InputDecoration(labelText: 'Id input'),
+              onChanged: (val) {
+                tempId = val.toInt();
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
