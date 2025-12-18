@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "606862688252",
+    "project_id": "ourobre-project",
+    "storage_bucket": "ourobre-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:606862688252:android:14bb84e70eb1c5177bfc79",
+        "android_client_info": {
+          "package_name": "com.example.final_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc8sLbaknSp7aTmwlmobw72P0KsQOj15w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
