@@ -1,0 +1,25 @@
+services:
+  backend-framework:
+    image: node:alpine
+    working_dir: /app
+    command: sh -c "npm install && node app.js"
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./express-js-app:/app
+      - ./certs:/app/certs
+    restart: always
+
+  mongo:
+    image: mongo:8.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+
+volumes:
+  mongo-data:
+  mongo-config:
