@@ -7,7 +7,9 @@ const app = express();
 const port = 3001;
 
 app.use(cors()); // allows the flutter app to talk to the server
-app.use(express.json());
+//app.use(express.json());                                        //had to increase alloted limit for images as they take up more data.
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const mongoURI = 'mongodb://mongo:27017';
 
@@ -63,12 +65,27 @@ const userTrackingSchema = new mongoose.Schema({
   longitude: String
 })
 
+const postSchema = new mongoose.Schema({
+  eventId: String,
+  username: String,
+  image: String,                          //image is base 64 encoded
+  description: String,
+  likes: [String],                        // have to keep track of usernames who liked posts as user cannot like image more than twice
+  comments: [{
+    username: String,
+    comment: String,
+    timestamp: { type: Date, default: Date.now }
+  }],
+  createdAt: { type: Date, default: Date.now }
+});
+
 const User = mongoose.model('User', userSchema);
 const Event = mongoose.model('Event', eventSchema);
 const UserEventInstance = mongoose.model('UserEventInstance', userEventInstanceSchema);
 const UserTracking = mongoose.model('UserTrackingInstance', userTrackingSchema);
 const EventChat = mongoose.model("EventChat", eventChatSchema);
 const EventUserComment = mongoose.model("EventUserComment", eventUserCommentSchema);
+const Post = mongoose.model('Post', postSchema);
 
 //standard port is for debugging purpouses.
 app.get('/', (req, res) => {
@@ -293,6 +310,102 @@ app.post('/eventJoinRequest', async (req, res) => {
     
   } catch (error) {
     console.error(error);
+    res.status(500).send("Server error");
+  }
+});
+
+
+// Post creation logic:
+// First, it is checked that the user is a member of the event
+// Then, when the identity is resolved, the user's post is saved successfully as a base 64 string. 
+app.post('/createPost', async (req, res) => {
+  try {
+    const { eventId, username, image, description } = req.body;
+
+    // Security: Verify user is a member of this event
+    const isMember = await UserEventInstance.findOne({ username, eventId });
+    if (!isMember) {
+      return res.status(403).send("you must join the event to post.");
+    }
+
+    const newPost = new Post({ 
+      eventId, 
+      username, 
+      image,                  //is base 64 string
+      description, 
+      likes: [], 
+      comments: [] 
+    });
+
+    await newPost.save();
+    res.status(201).json({ message: "Post created successfully", post: newPost });
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+//  The following request handles the retreival of event posts
+//  I have sorted them in order by creation
+app.post('/getEventPosts', async (req, res) => {
+  try {
+    const { eventId } = req.body;
+    const posts = await Post.find({ 
+      eventId 
+    }).sort({ 
+      createdAt: -1                 //using -1 means that I want the newest posts to appear first in the array, followed by later ones. 
+    }).lean();
+
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+
+//  The following is my introductory attempt at handling the post deletion logic.
+//  Later, I want the user to have the ability to delete their own post.
+app.post('/deletePost', async (req, res) => {
+  try {
+    const { postId, username } = req.body;
+    const post = await Post.findById(postId);
+
+    if (!post){
+      return res.status(404).send("Post not found");
+    }
+    
+    // Only the creator can delete the post
+    if (post.username !== username) {
+      return res.status(403).send("Unauthorized to delete this post");
+    }
+
+    await Post.findByIdAndDelete(postId);
+    res.status(200).send("Post deleted");
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+});
+
+//  The following is my logic for handling the like button
+//  I did not want the user to have the ability to like twice, so I
+//  had to keep a log of all of the users who liked a post in order to keep the program responsive
+app.post('/toggleLikePost', async (req, res) => {
+  try {
+    const { postId, username } = req.body;
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).send("Post not found");
+
+    const likeIndex = post.likes.indexOf(username);
+    if (likeIndex > -1) {
+      post.likes.splice(likeIndex, 1); 
+    } else {
+      post.likes.push(username); 
+    }
+    
+    await post.save();
+    res.status(200).json({ likes: post.likes });
+  } catch (error) {
     res.status(500).send("Server error");
   }
 });
